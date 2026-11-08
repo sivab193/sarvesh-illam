@@ -15,7 +15,7 @@ way in.
 | --- | --- |
 | `go2rtc.yaml` | Stream definitions. Credentials come from the environment. |
 | `www/` | Sarvesh Illam dashboard, served by go2rtc at `http://<LAN_IP>:1984/`. |
-| `run.sh` | Loads `.env`, starts go2rtc. |
+| `run.sh` | Shortcut for `./stack.sh start dashboard home`. |
 | `alerts/` | Camera alerts plus the Home Assistant control bridge. |
 | `home-assistant/` | Safe, optional camera-triggered-light automation template. |
 | `android/` | Capacitor Android project for the Sarvesh Illam APK. |
@@ -145,6 +145,11 @@ startup — and values sourced this way are masked as `***` in its HTTP API.
 embed feeds cross-origin. It makes the API accessible from any page you visit
 while go2rtc is running, which is an acceptable trade on a trusted LAN — but
 don't expose port 1984 to the internet.
+
+For remote access, join the home network over Tailscale and open the dashboard
+at the server's Tailscale address instead of forwarding any port. The cameras,
+DVRs, and smart devices stay on the LAN; only the Tailscale-connected device
+reaches them.
 
 ## Alerts service
 

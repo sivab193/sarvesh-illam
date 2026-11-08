@@ -14,13 +14,13 @@ http://127.0.0.1:1984/api/stream.ts?src=cam3
 #EXTINF:-1 tvg-id="cam4" tvg-name="Cam 4" tvg-chno="4" group-title="CCTV",Cam 4
 http://127.0.0.1:1984/api/stream.ts?src=cam4
 
-# ---------------- DVR 2 (add later) ----------------
-# Uncomment after adding cam5-8 to go2rtc.yaml, then restart go2rtc and refresh Jellyfin.
-# #EXTINF:-1 tvg-id="cam5" tvg-name="Cam 5" tvg-chno="5" group-title="CCTV",Cam 5
-# http://127.0.0.1:1984/api/stream.ts?src=cam5
-# #EXTINF:-1 tvg-id="cam6" tvg-name="Cam 6" tvg-chno="6" group-title="CCTV",Cam 6
-# http://127.0.0.1:1984/api/stream.ts?src=cam6
-# #EXTINF:-1 tvg-id="cam7" tvg-name="Cam 7" tvg-chno="7" group-title="CCTV",Cam 7
-# http://127.0.0.1:1984/api/stream.ts?src=cam7
-# #EXTINF:-1 tvg-id="cam8" tvg-name="Cam 8" tvg-chno="8" group-title="CCTV",Cam 8
-# http://127.0.0.1:1984/api/stream.ts?src=cam8
+# ---------------- DVR 2 (live) ----------------
+# cam5-8 are defined in go2rtc.yaml and live on the dashboard.
+#EXTINF:-1 tvg-id="cam5" tvg-name="Cam 5" tvg-chno="5" group-title="CCTV",Cam 5
+http://127.0.0.1:1984/api/stream.ts?src=cam5
+#EXTINF:-1 tvg-id="cam6" tvg-name="Cam 6" tvg-chno="6" group-title="CCTV",Cam 6
+http://127.0.0.1:1984/api/stream.ts?src=cam6
+#EXTINF:-1 tvg-id="cam7" tvg-name="Cam 7" tvg-chno="7" group-title="CCTV",Cam 7
+http://127.0.0.1:1984/api/stream.ts?src=cam7
+#EXTINF:-1 tvg-id="cam8" tvg-name="Cam 8" tvg-chno="8" group-title="CCTV",Cam 8
+http://127.0.0.1:1984/api/stream.ts?src=cam8

@@ -33,7 +33,8 @@ services:
       - ./data/home:/data
 
   cctv:
-    image: ghcr.io/alexxit/go2rtc:latest
+    # Pinned to match the vendored player files in www/ (go2rtc v1.9.14, see README).
+    image: ghcr.io/alexxit/go2rtc:v1.9.14
     restart: unless-stopped
     env_file:
       - path: .env
