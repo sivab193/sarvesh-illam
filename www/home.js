@@ -68,7 +68,7 @@
   }
   function sceneShape(kind){
     if (kind === "msi") return `<span class="scene-object monitor-object"><span class="monitor-screen"><i></i></span><span class="monitor-neck"></span><span class="monitor-foot"></span></span>`;
-    if (kind === "hp") return `<span class="scene-object monitor-object portrait"><span class="monitor-screen"><i></i></span><span class="monitor-neck"></span><span class="monitor-foot"></span></span>`;
+    if (kind === "hp") return `<span class="scene-object monitor-object"><span class="monitor-screen"><i></i></span><span class="monitor-neck"></span><span class="monitor-foot"></span></span>`;
     if (kind === "alexa") return `<span class="scene-object alexa-object"><span class="alexa-ring"></span><span class="alexa-dot"></span></span>`;
     if (kind === "lamp") return `<span class="lamp-beam"></span><span class="scene-object lamp-object"><span class="lamp-shade"></span><span class="lamp-arm"></span><span class="lamp-base"></span></span>`;
     return `<span class="scene-object fan-object"><span class="fan-top"></span><span class="fan-grille"><i></i><i></i><i></i></span><span class="fan-base"></span></span>`;
@@ -89,15 +89,14 @@
     const alexa = find("alexa");
     const lamp = find("table light");
     const fan = find("fan");
+    const stripId = hp?.device_id || msi?.device_id;
+    const outlets = devices.filter(item => stripId && item.device_id === stripId && !item.read_only);
     return `<div class="room-visual ${lamp?.state === "on" ? "has-lamp-light" : ""}">
       <div class="room-visual-copy"><div><h3>Interactive room</h3><p>Tap a powered item to switch it on or off.</p></div><span class="room-live-key"><i></i>Live state</span></div>
       <div class="room-model" role="group" aria-label="Interactive 3D visualization of the Study Room">
         <div class="room-back-wall"></div><div class="room-side-wall"></div><div class="room-floor-plane"></div>
-        <div class="scene-window" aria-hidden="true"><i></i><i></i></div>
-        <div class="scene-cabinet" aria-hidden="true"><i></i></div>
-        <div class="scene-bed" aria-hidden="true"><span></span></div>
         <div class="scene-desk" aria-hidden="true"><span class="desk-top"></span><i class="desk-leg left"></i><i class="desk-leg right"></i><span class="scene-keyboard"></span><span class="scene-mouse"></span></div>
-        <div class="scene-power-strip" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+        <button class="scene-power-strip" data-device-off="${esc(outlets.map(item => item.id).join(','))}" aria-label="Turn off all outlets on the power strip" ${outlets.length ? '' : 'disabled'}><i></i><i></i><i></i><i></i><i></i><span>Power strip · Turn all off</span></button>
         ${sceneControl(msi, "msi", "MSI monitor")}
         ${sceneControl(hp, "hp", "HP monitor")}
         ${sceneControl(alexa, "alexa", "Alexa")}
