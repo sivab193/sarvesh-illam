@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b0e13">
+<link rel="stylesheet" href="dialogs.css?v=1">
 <link rel="stylesheet" href="room.css?v=6">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -261,6 +262,7 @@
   </div>
 
 <script src="runtime-config.js"></script>
+<script src="dialogs.js?v=1"></script>
 <script>
 /* ============================ CONFIG ============================ */
 // Served by go2rtc itself (api.static_dir), so same origin; the localhost
@@ -289,15 +291,15 @@ const hostLabel = document.getElementById("hostlbl");
 hostLabel.textContent = " · " + HOST.replace(/^https?:\/\//,"");
 hostLabel.title = "Change Sarvesh Illam server";
 hostLabel.style.cursor = "pointer";
-hostLabel.onclick = () => {
-  const next = prompt("Sarvesh Illam server address", HOST);
+hostLabel.onclick = async () => {
+  const next = await DashboardUI.prompt("Sarvesh Illam server address", HOST);
   if (!next) return;
   try {
     const url = new URL(next);
     if (!/^https?:$/.test(url.protocol)) throw new Error();
     localStorage.setItem("sarveshHost", url.origin);
     location.reload();
-  } catch (_) { alert("Enter a full local address, for example http://192.168.0.4:1984"); }
+  } catch (_) { DashboardUI.alert("Enter a full local address, for example http://192.168.0.4:1984"); }
 };
 
 let hd = localStorage.getItem("hdgrid") === "1";
@@ -582,7 +584,7 @@ clock.textContent = new Date().toLocaleTimeString();
 setTimeout(()=> refreshAvailability(true), 400);
 setInterval(()=> refreshAvailability(false), 15000);
 </script>
-<script src="home.js?v=4"></script>
+<script src="home.js?v=5"></script>
 <script>
 function setAppView(view, remember = true){
   const home = view === "home";

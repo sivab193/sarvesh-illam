@@ -192,7 +192,7 @@
       const r = await fetch(`${API}/api/home/entities/${encodeURIComponent(id)}`, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({action, data})});
       if (!r.ok) throw new Error();
       setTimeout(load, 350);
-    } catch (_) { alert("Device control failed. Check the Sarvesh Illam service and Home Assistant."); }
+    } catch (_) { DashboardUI.alert("Device control failed. Check the Sarvesh Illam service and Home Assistant."); }
     finally { control.disabled = false; }
   }
   async function manage(path, method, body){
@@ -203,43 +203,43 @@
     return r.json();
   }
   async function addRoom(){
-    const name = prompt("Room name"); if (!name?.trim()) return;
-    try { await manage("/rooms", "POST", {name}); await load(); } catch (error) { alert(error.message); }
+    const name = await DashboardUI.prompt("Room name"); if (!name?.trim()) return;
+    try { await manage("/rooms", "POST", {name}); await load(); } catch (error) { DashboardUI.alert(error.message); }
   }
   async function renameRoom(room){
-    const name = prompt("Rename room", room); if (!name?.trim() || name === room) return;
-    try { await manage(`/rooms/${encodeURIComponent(room)}`, "PATCH", {name}); await load(); } catch (error) { alert(error.message); }
+    const name = await DashboardUI.prompt("Rename room", room); if (!name?.trim() || name === room) return;
+    try { await manage(`/rooms/${encodeURIComponent(room)}`, "PATCH", {name}); await load(); } catch (error) { DashboardUI.alert(error.message); }
   }
   async function addDevice(){
-    const entity_id = prompt("Home Assistant entity ID (for example light.living_room_lamp)");
+    const entity_id = await DashboardUI.prompt("Home Assistant entity ID (for example light.living_room_lamp)");
     if (!entity_id?.trim()) return;
-    const name = prompt("Display name", entity_id) || entity_id;
-    const room = prompt("Room", config?.rooms?.[0] || "Home") || "Home";
-    const icon = prompt("Icon", entity_id.startsWith("light.") ? "💡" : entity_id.startsWith("switch.") ? "🔌" : "◌") || "⌂";
-    try { await manage("/entities", "POST", {entity_id, name, room, icon}); await load(); } catch (error) { alert(error.message); }
+    const name = await DashboardUI.prompt("Display name", entity_id) || entity_id;
+    const room = await DashboardUI.prompt("Room", config?.rooms?.[0] || "Home") || "Home";
+    const icon = await DashboardUI.prompt("Icon", entity_id.startsWith("light.") ? "💡" : entity_id.startsWith("switch.") ? "🔌" : "◌") || "⌂";
+    try { await manage("/entities", "POST", {entity_id, name, room, icon}); await load(); } catch (error) { DashboardUI.alert(error.message); }
   }
   async function editDevice(id){
     const device = (await fetch(`${API}/api/home/states`).then(r => r.json())).find(item => item.id === id);
     if (!device) return;
-    const name = prompt("Display name", device.name); if (!name?.trim()) return;
-    const room = prompt("Room", device.room); if (!room?.trim()) return;
-    const icon = prompt("Icon", device.icon); if (!icon?.trim()) return;
-    try { await manage(`/entities/${encodeURIComponent(id)}`, "PATCH", {name, room, icon}); await load(); } catch (error) { alert(error.message); }
+    const name = await DashboardUI.prompt("Display name", device.name); if (!name?.trim()) return;
+    const room = await DashboardUI.prompt("Room", device.room); if (!room?.trim()) return;
+    const icon = await DashboardUI.prompt("Icon", device.icon); if (!icon?.trim()) return;
+    try { await manage(`/entities/${encodeURIComponent(id)}`, "PATCH", {name, room, icon}); await load(); } catch (error) { DashboardUI.alert(error.message); }
   }
   async function removeDevice(id){
-    if (!confirm("Remove this device from the dashboard? It will stay in Home Assistant.")) return;
-    try { await manage(`/entities/${encodeURIComponent(id)}`, "DELETE"); await load(); } catch (error) { alert(error.message); }
+    if (!await DashboardUI.confirm("Remove this device from the dashboard? It will stay in Home Assistant.")) return;
+    try { await manage(`/entities/${encodeURIComponent(id)}`, "DELETE"); await load(); } catch (error) { DashboardUI.alert(error.message); }
   }
   async function turnOffRoom(button){
     const room = button.dataset.roomOff;
-    if (!confirm(`Turn off all controllable devices in ${room}?`)) return;
+    if (!await DashboardUI.confirm(`Turn off all controllable devices in ${room}?`)) return;
     button.disabled = true;
     try { await manage(`/rooms/${encodeURIComponent(room)}/turn_off`, "POST"); setTimeout(load, 400); }
-    catch (error) { alert(error.message); button.disabled = false; }
+    catch (error) { DashboardUI.alert(error.message); button.disabled = false; }
   }
   async function turnOffDevice(button){
     const ids = button.dataset.deviceOff.split(",").filter(Boolean);
-    if (!confirm("Turn off every outlet on this device?")) return;
+    if (!await DashboardUI.confirm("Turn off every outlet on this device?")) return;
     button.disabled = true;
     try {
       for (const id of ids) {
@@ -251,7 +251,7 @@
       }
       setTimeout(load, 400);
     } catch (_) {
-      alert("Some outlets could not be turned off. Check that the power strip is online.");
+      DashboardUI.alert("Some outlets could not be turned off. Check that the power strip is online.");
       button.disabled = false;
     }
   }
@@ -270,7 +270,7 @@
       animateMusic(); load();
     } catch (error) {
       stopLocalAudio();
-      alert(error.message || "Microphone access is required for music reactive mode.");
+      DashboardUI.alert(error.message || "Microphone access is required for music reactive mode.");
       load();
     }
   }
@@ -305,7 +305,7 @@
   async function stopMusic(force = false){
     stopLocalAudio();
     try { music = await musicRequest("/stop", {client_id: clientId, take_over: force}); }
-    catch (error) { alert(error.message || "Could not stop music reactive mode."); }
+    catch (error) { DashboardUI.alert(error.message || "Could not stop music reactive mode."); }
     load();
   }
   async function load(){
