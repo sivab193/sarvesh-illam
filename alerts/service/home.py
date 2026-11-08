@@ -86,7 +86,8 @@ class HomeAssistant:
         return {"enabled": self.enabled, "configured": bool(self.entities),
                 "rooms": self.rooms(),
                 "entities": [{k: v for k, v in item.items()
-                              if k in {"id", "entity_id", "name", "room", "icon", "type", "read_only", "provider"}}
+                              if k in {"id", "entity_id", "name", "room", "icon", "type", "read_only", "provider",
+                                       "device_id", "device_name"}}
                              for item in self.entities.values()]}
 
     def rooms(self) -> list[str]:
@@ -231,6 +232,8 @@ class HomeAssistant:
                 "type": item.get("type", item["entity_id"].split(".")[0]),
                 "read_only": item.get("read_only", False),
                 "provider": item.get("provider", "home_assistant"),
+                "device_id": item.get("device_id"),
+                "device_name": item.get("device_name"),
                 "state": state, "attributes": attributes}
 
     def command(self, item_id: str, action: str, data: dict[str, Any] | None = None):

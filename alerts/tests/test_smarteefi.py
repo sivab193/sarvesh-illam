@@ -38,6 +38,8 @@ class SmarteefiProtocolTests(unittest.TestCase):
         self.assertEqual(len(entities), 5)
         self.assertEqual(entities[0]["id"], "hall_strip_port_1")
         self.assertEqual(entities[0]["name"], "Lamp")
+        self.assertEqual(entities[0]["device_id"], "hall_strip")
+        self.assertEqual(entities[0]["device_name"], "Smarteefi strip")
         self.assertTrue(all(item["provider"] == "smarteefi" for item in entities))
 
 

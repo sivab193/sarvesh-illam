@@ -40,12 +40,36 @@
     }
     return "Off";
   }
+  function deviceGroups(devices){
+    const groups = new Map();
+    const ungrouped = [];
+    for (const device of devices) {
+      if (!device.device_id) { ungrouped.push(device); continue; }
+      if (!groups.has(device.device_id)) groups.set(device.device_id, {
+        id: device.device_id,
+        name: device.device_name || "Connected device",
+        outlets: [],
+      });
+      groups.get(device.device_id).outlets.push(device);
+    }
+    return {groups: [...groups.values()], ungrouped};
+  }
+  function roomDevices(devices){
+    const {groups, ungrouped} = deviceGroups(devices);
+    const grouped = groups.map(group => `<div class="device-group">
+      <div class="device-group-head"><div><h3>${esc(group.name)}</h3><p>${group.outlets.length} ${group.outlets.length === 1 ? "outlet" : "outlets"} · Local power strip</p></div>
+      <button class="room-button room-off" data-device-off="${esc(group.outlets.map(outlet => outlet.id).join(","))}" ${group.outlets.some(outlet => !outlet.read_only && outlet.state !== "unavailable") ? "" : "disabled"}>Turn off device</button></div>
+      <div class="device-grid">${group.outlets.map(card).join("")}</div>
+    </div>`).join("");
+    const standalone = ungrouped.length ? `<div class="device-grid">${ungrouped.map(card).join("")}</div>` : "";
+    return grouped + standalone || `<p class="room-empty">No devices in this room yet.</p>`;
+  }
   function render(states){
     const rooms = new Map();
     for (const room of config?.rooms || []) rooms.set(room, []);
     for (const device of states) rooms.set(device.room, [...(rooms.get(device.room) || []), device]);
     view.innerHTML = `<div class="home-head"><div><h1>Home</h1><p>Control your connected devices locally.</p></div><div class="home-actions"><button class="home-refresh" id="homeAddRoom">＋ Room</button><button class="home-refresh" id="homeAddDevice">＋ Device</button><button class="home-refresh" id="homeRefresh">↻ Refresh</button></div></div>${musicCard()}` +
-      [...rooms].map(([room, devices]) => `<section class="room"><div class="room-head"><h2>${esc(room)}</h2><div><button class="room-button" data-room-edit="${esc(room)}">Edit</button><button class="room-button room-off" data-room-off="${esc(room)}" ${devices.some(device => !device.read_only && ["light", "switch"].includes(device.type)) ? "" : "disabled"}>Turn off room</button></div></div><div class="device-grid">${devices.map(card).join("") || `<p class="room-empty">No devices in this room yet.</p>`}</div></section>`).join("");
+      [...rooms].map(([room, devices]) => `<section class="room"><div class="room-head"><h2>${esc(room)}</h2><div><button class="room-button" data-room-edit="${esc(room)}">Edit</button><button class="room-button room-off" data-room-off="${esc(room)}" ${devices.some(device => !device.read_only && ["light", "switch"].includes(device.type)) ? "" : "disabled"}>Turn off room</button></div></div>${roomDevices(devices)}</section>`).join("");
     document.getElementById("homeRefresh").onclick = load;
     document.getElementById("homeAddRoom").onclick = addRoom;
     document.getElementById("homeAddDevice").onclick = addDevice;
@@ -68,6 +92,7 @@
     const musicStop = document.getElementById("musicStop");
     if (musicStop) musicStop.onclick = () => stopMusic(true);
     view.querySelectorAll("[data-room-off]").forEach(button => button.onclick = () => turnOffRoom(button));
+    view.querySelectorAll("[data-device-off]").forEach(button => button.onclick = () => turnOffDevice(button));
     view.querySelectorAll("[data-room-edit]").forEach(button => button.onclick = () => renameRoom(button.dataset.roomEdit));
     view.querySelectorAll("[data-edit-device]").forEach(button => button.onclick = () => editDevice(button.dataset.editDevice));
     view.querySelectorAll("[data-remove-device]").forEach(button => button.onclick = () => removeDevice(button.dataset.removeDevice));
@@ -159,6 +184,24 @@
     button.disabled = true;
     try { await manage(`/rooms/${encodeURIComponent(room)}/turn_off`, "POST"); setTimeout(load, 400); }
     catch (error) { alert(error.message); button.disabled = false; }
+  }
+  async function turnOffDevice(button){
+    const ids = button.dataset.deviceOff.split(",").filter(Boolean);
+    if (!confirm("Turn off every outlet on this device?")) return;
+    button.disabled = true;
+    try {
+      for (const id of ids) {
+        const response = await fetch(`${API}/api/home/entities/${encodeURIComponent(id)}`, {
+          method: "POST", headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({action: "turn_off", data: {}}),
+        });
+        if (!response.ok) throw new Error();
+      }
+      setTimeout(load, 400);
+    } catch (_) {
+      alert("Some outlets could not be turned off. Check that the power strip is online.");
+      button.disabled = false;
+    }
   }
   async function musicRequest(path, body){
     const r = await fetch(`${API}/api/home/music-reactive${path}`, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});

@@ -128,6 +128,8 @@ class SmarteefiProvider:
                 "type": "switch",
                 "read_only": False,
                 "provider": self.name,
+                "device_id": strip_id,
+                "device_name": strip["name"],
                 "strip_id": strip_id,
                 "port": port,
             }
