@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b0e13">
+<link rel="stylesheet" href="room.css?v=5">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -581,7 +582,7 @@ clock.textContent = new Date().toLocaleTimeString();
 setTimeout(()=> refreshAvailability(true), 400);
 setInterval(()=> refreshAvailability(false), 15000);
 </script>
-<script src="home.js?v=2"></script>
+<script src="home.js?v=3"></script>
 <script>
 function setAppView(view, remember = true){
   const home = view === "home";
@@ -606,7 +607,9 @@ document.getElementById("appnav").addEventListener("click", e => {
   const button = e.target.closest("button[data-view]"); if (!button) return;
   setAppView(button.dataset.view);
 });
-setAppView(localStorage.getItem("sarveshView") || "security", false);
+const requestedView = new URLSearchParams(location.search).get("view");
+setAppView(["home", "security"].includes(requestedView) ? requestedView :
+  (localStorage.getItem("sarveshView") || "security"), false);
 </script>
 </body>
 </html>

@@ -17,6 +17,8 @@
   let smoothedLevel = 0;
   let lastBass = 0;
   let musicHue = 210;
+  let lastStates = [];
+  let homeMode = localStorage.getItem("sarveshHomeMode") || "room";
   const clientId = localStorage.getItem("sarveshMusicClient") ||
     (crypto.randomUUID ? crypto.randomUUID() : `client-${Date.now()}-${Math.random()}`);
   localStorage.setItem("sarveshMusicClient", clientId);
@@ -64,15 +66,66 @@
     const standalone = ungrouped.length ? `<div class="device-grid">${ungrouped.map(card).join("")}</div>` : "";
     return grouped + standalone || `<p class="room-empty">No devices in this room yet.</p>`;
   }
+  function sceneShape(kind){
+    if (kind === "msi") return `<span class="scene-object monitor-object"><span class="monitor-screen"><i></i></span><span class="monitor-neck"></span><span class="monitor-foot"></span></span>`;
+    if (kind === "hp") return `<span class="scene-object monitor-object portrait"><span class="monitor-screen"><i></i></span><span class="monitor-neck"></span><span class="monitor-foot"></span></span>`;
+    if (kind === "alexa") return `<span class="scene-object alexa-object"><span class="alexa-ring"></span><span class="alexa-dot"></span></span>`;
+    if (kind === "lamp") return `<span class="lamp-beam"></span><span class="scene-object lamp-object"><span class="lamp-shade"></span><span class="lamp-arm"></span><span class="lamp-base"></span></span>`;
+    return `<span class="scene-object fan-object"><span class="fan-top"></span><span class="fan-grille"><i></i><i></i><i></i></span><span class="fan-base"></span></span>`;
+  }
+  function sceneControl(device, kind, fallbackName){
+    if (!device) return "";
+    const online = !["unavailable", "unknown"].includes(device.state);
+    const on = device.state === "on";
+    return `<button class="scene-control scene-${kind} ${on ? "is-on" : "is-off"} ${online ? "" : "is-offline"}" data-command="${on ? "turn_off" : "turn_on"}" data-id="${esc(device.id)}" ${online ? "" : "disabled"} aria-label="${esc(`${on ? "Turn off" : "Turn on"} ${device.name || fallbackName}`)}">
+      ${sceneShape(kind)}
+      <span class="scene-device-label"><strong>${esc(device.name || fallbackName)}</strong><small><i></i>${esc(stateLabel(device))}</small></span>
+    </button>`;
+  }
+  function studyRoomScene(devices){
+    const find = text => devices.find(device => device.name.toLowerCase().includes(text));
+    const hp = find("hp monitor");
+    const msi = find("msi monitor");
+    const alexa = find("alexa");
+    const lamp = find("table light");
+    const fan = find("fan");
+    return `<div class="room-visual ${lamp?.state === "on" ? "has-lamp-light" : ""}">
+      <div class="room-visual-copy"><div><h3>Interactive room</h3><p>Tap a powered item to switch it on or off.</p></div><span class="room-live-key"><i></i>Live state</span></div>
+      <div class="room-model" role="group" aria-label="Interactive 3D visualization of the Study Room">
+        <div class="room-back-wall"></div><div class="room-side-wall"></div><div class="room-floor-plane"></div>
+        <div class="scene-window" aria-hidden="true"><i></i><i></i></div>
+        <div class="scene-cabinet" aria-hidden="true"><i></i></div>
+        <div class="scene-bed" aria-hidden="true"><span></span></div>
+        <div class="scene-desk" aria-hidden="true"><span class="desk-top"></span><i class="desk-leg left"></i><i class="desk-leg right"></i><span class="scene-keyboard"></span><span class="scene-mouse"></span></div>
+        <div class="scene-power-strip" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+        ${sceneControl(msi, "msi", "MSI monitor")}
+        ${sceneControl(hp, "hp", "HP monitor")}
+        ${sceneControl(alexa, "alexa", "Alexa")}
+        ${sceneControl(lamp, "lamp", "Table light")}
+        ${sceneControl(fan, "fan", "Fan")}
+      </div>
+      <p class="room-layout-note">Layout based on your video: MSI left, HP right, Alexa in front of MSI, and the light behind HP.</p>
+    </div>`;
+  }
+  function roomContent(room, devices){
+    if (homeMode === "room" && room.toLowerCase() === "study room") return studyRoomScene(devices);
+    return roomDevices(devices);
+  }
   function render(states){
+    lastStates = states;
     const rooms = new Map();
     for (const room of config?.rooms || []) rooms.set(room, []);
     for (const device of states) rooms.set(device.room, [...(rooms.get(device.room) || []), device]);
-    view.innerHTML = `<div class="home-head"><div><h1>Home</h1><p>Control your connected devices locally.</p></div><div class="home-actions"><button class="home-refresh" id="homeAddRoom">＋ Room</button><button class="home-refresh" id="homeAddDevice">＋ Device</button><button class="home-refresh" id="homeRefresh">↻ Refresh</button></div></div>${musicCard()}` +
-      [...rooms].map(([room, devices]) => `<section class="room"><div class="room-head"><h2>${esc(room)}</h2><div><button class="room-button" data-room-edit="${esc(room)}">Edit</button><button class="room-button room-off" data-room-off="${esc(room)}" ${devices.some(device => !device.read_only && ["light", "switch"].includes(device.type)) ? "" : "disabled"}>Turn off room</button></div></div>${roomDevices(devices)}</section>`).join("");
+    view.innerHTML = `<div class="home-head"><div><h1>Home</h1><p>Control your connected devices locally.</p></div><div class="home-actions"><div class="home-mode" role="group" aria-label="Home display"><button data-home-mode="room" class="${homeMode === "room" ? "on" : ""}">Room view</button><button data-home-mode="controls" class="${homeMode === "controls" ? "on" : ""}">Controls</button></div><button class="home-refresh" id="homeAddRoom">＋ Room</button><button class="home-refresh" id="homeAddDevice">＋ Device</button><button class="home-refresh" id="homeRefresh">↻ Refresh</button></div></div>${musicCard()}` +
+      [...rooms].map(([room, devices]) => `<section class="room"><div class="room-head"><h2>${esc(room)}</h2><div><button class="room-button" data-room-edit="${esc(room)}">Edit</button><button class="room-button room-off" data-room-off="${esc(room)}" ${devices.some(device => !device.read_only && ["light", "switch"].includes(device.type)) ? "" : "disabled"}>Turn off room</button></div></div>${roomContent(room, devices)}</section>`).join("");
     document.getElementById("homeRefresh").onclick = load;
     document.getElementById("homeAddRoom").onclick = addRoom;
     document.getElementById("homeAddDevice").onclick = addDevice;
+    view.querySelectorAll("[data-home-mode]").forEach(button => button.onclick = () => {
+      homeMode = button.dataset.homeMode;
+      localStorage.setItem("sarveshHomeMode", homeMode);
+      render(lastStates);
+    });
     view.querySelectorAll("[data-command]").forEach(button => button.onclick = () => command(button));
     view.querySelectorAll("input[data-brightness]").forEach(input => input.onchange = () =>
       command(input, "set", {brightness_pct: Number(input.value)}));
