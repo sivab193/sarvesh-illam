@@ -1,6 +1,11 @@
 <!doctype html>
 <html lang="en">
 <head>
+<script>
+if (location.protocol.startsWith('http')) {
+  const base = document.createElement('base'); base.href = '/'; document.head.append(base);
+}
+</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b0e13">
@@ -461,9 +466,7 @@ paintHd();
 
 document.getElementById("filter").addEventListener("click", e=>{
   const b = e.target.closest("button[data-f]"); if(!b) return;
-  filter = b.dataset.f; localStorage.setItem("dvrfilter", filter);
-  document.querySelectorAll("#filter button").forEach(x=>x.classList.toggle("on", x.dataset.f===filter));
-  if(focusEl.classList.contains("show")) closeFocus(); else renderGrid();
+  window.navigateDashboard(b.dataset.f === 'all' ? '/security' : `/security/dvr/${b.dataset.f}`);
 });
 document.querySelectorAll("#filter button").forEach(x=>x.classList.toggle("on", x.dataset.f===filter));
 
@@ -584,7 +587,7 @@ clock.textContent = new Date().toLocaleTimeString();
 setTimeout(()=> refreshAvailability(true), 400);
 setInterval(()=> refreshAvailability(false), 15000);
 </script>
-<script src="home.js?v=5"></script>
+<script src="home.js?v=6"></script>
 <script>
 function setAppView(view, remember = true){
   const home = view === "home";
@@ -607,11 +610,35 @@ function setAppView(view, remember = true){
 }
 document.getElementById("appnav").addEventListener("click", e => {
   const button = e.target.closest("button[data-view]"); if (!button) return;
-  setAppView(button.dataset.view);
+  window.navigateDashboard(button.dataset.view === 'home' ? '/home' : '/security');
 });
-const requestedView = new URLSearchParams(location.search).get("view");
-setAppView(["home", "security"].includes(requestedView) ? requestedView :
-  (localStorage.getItem("sarveshView") || "security"), false);
+function applyDashboardRoute(){
+  const path = location.protocol === 'file:' ? location.hash.slice(1) : location.pathname;
+  const normalized = path.replace(/\/+$/, '') || '/';
+  const dvr = normalized.match(/^\/security\/dvr\/([12])$/);
+  const home = normalized === '/home' || normalized === '/home/roomview' || normalized === '/home/controls';
+  filter = dvr ? dvr[1] : 'all';
+  localStorage.setItem('dvrfilter', filter);
+  document.querySelectorAll('#filter button').forEach(button => button.classList.toggle('on', button.dataset.f === filter));
+  focusEl.classList.remove('show'); fvideo.innerHTML = ''; focusIndex = -1;
+  if (home) window.SarveshHome.setMode(normalized === '/home/controls' ? 'controls' : 'room');
+  setAppView(home ? 'home' : 'security');
+  document.title = `Sarvesh Illam · ${home ? (normalized === '/home/controls' ? 'Home controls' : 'Room view') : dvr ? 'DVR ' + dvr[1] : 'Security'}`;
+}
+window.navigateDashboard = (path, replace = false) => {
+  const url = new URL(location.href);
+  if (url.protocol === 'file:') url.hash = path;
+  else url.pathname = path;
+  url.searchParams.delete('view');
+  if (url.href !== location.href) history[replace ? 'replaceState' : 'pushState']({}, '', url);
+  applyDashboardRoute();
+};
+window.addEventListener('popstate', applyDashboardRoute);
+const initialPath = location.protocol === 'file:' ? location.hash.slice(1) : location.pathname;
+if (!initialPath || initialPath === '/' || initialPath === '/index.html') {
+  const initialView = new URLSearchParams(location.search).get('view') || localStorage.getItem('sarveshView');
+  window.navigateDashboard(initialView === 'home' ? '/home' : '/security', true);
+} else applyDashboardRoute();
 </script>
 </body>
 </html>

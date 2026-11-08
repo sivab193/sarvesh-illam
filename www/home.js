@@ -121,9 +121,7 @@
     document.getElementById("homeAddRoom").onclick = addRoom;
     document.getElementById("homeAddDevice").onclick = addDevice;
     view.querySelectorAll("[data-home-mode]").forEach(button => button.onclick = () => {
-      homeMode = button.dataset.homeMode;
-      localStorage.setItem("sarveshHomeMode", homeMode);
-      render(lastStates);
+      window.navigateDashboard(button.dataset.homeMode === 'controls' ? '/home/controls' : '/home/roomview');
     });
     view.querySelectorAll("[data-command]").forEach(button => button.onclick = () => command(button));
     view.querySelectorAll("input[data-brightness]").forEach(input => input.onchange = () =>
@@ -329,6 +327,10 @@
   setInterval(() => {
     if (view.classList.contains("show")) load();
   }, 5000);
-  window.SarveshHome = {load};
+  window.SarveshHome = {load, setMode(mode){
+    homeMode = mode;
+    localStorage.setItem('sarveshHomeMode', mode);
+    if (config) render(lastStates);
+  }};
   load();
 })();
